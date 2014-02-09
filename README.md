@@ -23,19 +23,19 @@ Then,
 	    $ python manage.py modelgen person Job name:text duration:date person:f:Person
 
 This generates,
-		
-	    "person/models.py"
+	
+```python 
+class Person(models.Model):
+	dob = models.DateTimeField()
+	age = models.IntegerField()
+	name = models.CharField(max_length=255)
+	height = models.IntegerField()
 
-            class Person(models.Model):
-	        dob = models.DateTimeField()
-		age = models.IntegerField()
-		name = models.CharField(max_length=255)
-		height = models.IntegerField()
-
-	    class Job(models.Model):
-	        duration = models.DateTimeField()
-		person = models.ForeignKey(Person)
-		name = models.CharField(max_length=255)  
+class Job(models.Model):
+	duration = models.DateTimeField()
+	person = models.ForeignKey(Person)
+	name = models.CharField(max_length=255)  
+```
 
 	    
 For generating admin, 
@@ -45,10 +45,11 @@ For generating admin,
 	    
 
 This generates, 
-     		
-	    "person/admin.py"
+        
+```python
 	    
-	    admin.site.register(Person)
+admin.site.register(Person)
+```
 
 
 Note :: You must have the line "from person.models import *" at the top of person/admin.py. 
