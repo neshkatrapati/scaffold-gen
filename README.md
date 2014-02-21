@@ -37,7 +37,9 @@ This generates,
 		person = models.ForeignKey(Person)
 		name = models.CharField(max_length=255)  
 
-	    
+
+* Note : You must do syncdb to get these into db.
+
 For generating admin, 
     
 	    $ python manage.py scaffoldgen --admin <fully_qualified_model_name>
@@ -55,8 +57,19 @@ Note :: You must have the line "from person.models import *" at the top of perso
 This program will not add it
 Note :: This program will not check for duplicate registration
 	    
-	    
-	     
+
+For generating urls and views
+    
+         $ python manage.py scaffoldgen --views <fully_qualified_model_name>
+	 $ python manage.py scaffoldgen --views person.models.Person	    
+	
+
+
+Some of the things that you should do before running this command.
+* Add your app to the main urls.py 
+* Put these imports at the top of the views.py
+
+
 
 
 

@@ -3,6 +3,19 @@ from django.db import models
 import os,inspect
 from optparse import make_option
 
+class Color(object):
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
+    BOLD = '\033[1m'
+
+    @staticmethod
+    def pad(string, bold = False):
+        if bold:
+            return Color.UNDERLINE + Color.BOLD + string + Color.END
+
+        return Color.UNDERLINE + string + Color.END
+
+
 
 class Command(BaseCommand):
     args = "<model_full_qualified_name>"
@@ -13,8 +26,127 @@ class Command(BaseCommand):
             dest='admin',
             default=False,
             help='Generate admin.py'),
+            make_option('--view',
+            action='store_true',
+            dest='view',
+            default=False,
+            help='Generate views.py'),
         )
 
+
+    def gen_view(self, model_name, model_p):
+#        print model_name, model_p
+        app_name = model_p[0]
+        model_name = model_p[-1]
+        views_path = app_name + "/views.py" 
+        urls_path = app_name + "/urls.py"
+#        print views_path, urls_path
+        views_file = None
+        views_mode = ""
+        urls_file = None
+        urls_mode = ""
+        vprepend = ""
+        uprepend = "" 
+        new_content = ""
+        
+        if (not os.path.exists(urls_path)):
+            self.stdout.write(Color.pad("{urls_path} not found, I am creating it".format(**locals()),True))
+            uprepend = "from django.conf.urls import patterns, url\nfrom {package} import views".format(package = app_name)
+#            print prepend
+            urls_mode = "new"
+        else:
+            self.stdout.write(Color.pad("{urls_path} found, Generating new urls".format(**locals()),True))
+            urls_mode = "old"
+            urls_content = open(urls_path).read()
+#            print urls_content
+            new_content = ""
+            for ind in range(1,len(urls_content)+1):
+                if urls_content[-ind] == ')': 
+                    new_content = urls_content[:-ind]
+                    break 
+        
+        index_url = "url(r'^{model}s/$',views.{model}_index,name='{model}_index')".format(model = model_name.lower())
+        create_url = "url(r'^{model}s/create/$',views.{model}_create,name='{model}_create')".format(model = model_name.lower())
+        detail_url = "url(r'^{model}s/(?P<id>\d+)/$',views.{model}_detail,name='{model}_detail')".format(model = model_name.lower())
+        update_url = "url(r'^{model}s/(?P<id>\d+)/update/$',views.{model}_update,name='{model}_update')".format(model = model_name.lower())
+        delete_url = "url(r'^{model}s/(?P<id>\d+)/delete/$',views.{model}_delete,name='{model}_delete')".format(model = model_name.lower())
+
+        uwrite = new_content  + "\n\n"
+        if urls_mode == "new":
+            uwrite = uprepend + "\n" + "urlpatterns = patterns('',\n"
+
+        self.stdout.write(Color.pad("Generating {model}/ url".format(model = model_name.lower()),True))
+        uwrite += "\t #/{app_name}s/{model}s/\n".format(app_name = app_name,model = model_name.lower())
+        uwrite += "\t" + index_url + ",\n"
+
+        self.stdout.write(Color.pad("Generating {model}/detail url".format(model = model_name.lower()),True))
+        uwrite += "\t #/{app_name}s/{model}s/5\n".format(app_name = app_name,model = model_name.lower())
+        uwrite += "\t" + detail_url + ",\n"
+
+        self.stdout.write(Color.pad("Generating {model}/update url".format(model = model_name.lower()),True))
+        uwrite += "\t #/{app_name}s/{model}s/5/update\n".format(app_name = app_name,model = model_name.lower())
+        uwrite += "\t" + update_url + ",\n"
+
+        self.stdout.write(Color.pad("Generating {model}/delete url".format(model = model_name.lower()),True))
+        uwrite += "\t #/{app_name}s/{model}s/5/delete\n".format(app_name = app_name,model = model_name.lower())
+        uwrite += "\t" + delete_url + ",\n"
+
+        self.stdout.write(Color.pad("Generating {model}/create url".format(model = model_name.lower()),True))
+        uwrite += "\t #/{app_name}s/{model}s/create/\n".format(app_name = app_name,model = model_name.lower())
+        uwrite += "\t" + create_url + ",\n"
+        uwrite += ")"
+        
+    
+        
+        with open(urls_path,"w") as u:
+            u.write(uwrite)
+        self.stdout.write(Color.pad("Generated URLS",True))
+
+#        print uwrite
+        
+
+        # print index_url
+        # print detail_url 
+        # print create_url
+        # print update_url
+        # print delete_url
+
+        if (not os.path.exists(views_path)):
+            self.stdout.write("{views_path} not found, I am creating it".format(**locals()))
+            views_mode = "w"
+            vprepend = "from django.shortcuts import render\nfrom django.http import HttpResponse\nfrom {package} import *\n".format(package = app_name+".models")
+ 
+        else: 
+            views_mode = "a" 
+            vprepend = "\n"
+        
+        # Generating the index
+        self.stdout.write(Color.pad("Generating {model}_index view".format(model = model_name.lower())))
+        index_code = "def {model}_index(request):\n\treturn HttpResponse('You are @ {model}/index')\n".format(model = model_name.lower())
+        self.stdout.write(Color.pad("Generating {model}_detail view".format(model = model_name.lower())))
+        detail_code = "def {model}_detail(request,id):\n\treturn HttpResponse('You are @ {model}/detail')\n".format(model = model_name.lower())
+        self.stdout.write(Color.pad("Generating {model}_create view".format(model = model_name.lower()),True))
+        create_code = "def {model}_create(request):\n\treturn HttpResponse('You are @ {model}/create')\n".format(model = model_name.lower())
+        self.stdout.write(Color.pad("Generating {model}_update view".format(model = model_name.lower()),True))
+        update_code = "def {model}_update(request, id):\n\treturn HttpResponse('You are @ {model}/update')\n".format(model = model_name.lower())
+        self.stdout.write(Color.pad("Generating {model}_delete view".format(model = model_name.lower()),True))
+        delete_code = "def {model}_delete(request, id):\n\treturn HttpResponse('You are @ {model}/delete')\n".format(model = model_name.lower())
+
+        # print vprepend
+        # print index_code
+        # print detail_code
+        # print create_code
+        # print update_code
+        # print delete_code
+        
+        views_code = vprepend + index_code + detail_code + update_code + create_code + delete_code
+        with open(views_path, views_mode) as v:
+            v.write(views_code)
+            
+        self.stdout.write(Color.pad("Generated Views",True))
+        
+            
+        
     def handle(self, *args, **options):
         if len(args) < 1:
             self.stdout.write("Usage, <model_full_qualified_name>")
@@ -43,3 +175,6 @@ class Command(BaseCommand):
                     f.write("\nadmin.site.register({mname})".format(mname = model_p[-1]))
                     self.stdout.write("Done !!")
 
+        elif options["view"]:
+#            pass
+            self.gen_view(model_name,model_p)
