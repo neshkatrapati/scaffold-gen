@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Scaffold-gen : Generates scaffolds for django models." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Scaffold-gen</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/neshkatrapati/scaffold-gen">View on GitHub</a>
+
+          <h1 id="project_title">Scaffold-gen</h1>
+          <h2 id="project_tagline">Generates scaffolds for django models.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/neshkatrapati/scaffold-gen/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/neshkatrapati/scaffold-gen/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="django-scaffold-generator" class="anchor" href="#django-scaffold-generator"><span class="octicon octicon-link"></span></a>Django Scaffold Generator</h1>
+
+<h2>
+<a name="introduction" class="anchor" href="#introduction"><span class="octicon octicon-link"></span></a>Introduction</h2>
+
+<hr><p>This module generates model and admin code given some description. </p>
+
+<h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<hr><p>Download this, put it in your project and, add 'scaffold_gen' in INSTALLED_APPS of settings.py. Then do, 'python manage.py syncdb'</p>
+
+<h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<hr><p>To generate models, first do,</p>
+
+<pre><code>    $ python manage.py startapp &lt;appname&gt;
+    $ python manage.py startapp person
+</code></pre>
+
+<p>Then,</p>
+
+<pre><code>    $ python manage.py modelgen &lt;appname&gt; &lt;modelname&gt; [&lt;field_name&gt;:&lt;field_type&gt;:&lt;field_params&gt; ..]
+    $ python manage.py modelgen person Person name:text age:int dob:date
+    $ python manage.py modelgen person Job name:text duration:date person:f:Person
+</code></pre>
+
+<p>This generates,</p>
+
+<div class="highlight highlight-python"><pre><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">dob</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">()</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">()</span>
+    <span class="n">person</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Person</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>  
+</pre></div>
+
+<h2>
+<a name="available-field-types" class="anchor" href="#available-field-types"><span class="octicon octicon-link"></span></a>Available field types,</h2>
+
+<ul>
+<li>
+<code>text</code> : maps to <code>models.CharField</code>
+</li>
+<li>
+<code>date</code> : maps to <code>models.DateTimeField</code>
+</li>
+<li>
+<code>int</code> : maps to <code>models.IntegerField</code>
+</li>
+<li>
+<code>f:Model</code> : maps to <code>models.ForeignKey(Model)</code>
+</li>
+<li>Note : You must do syncdb to get these into db.</li>
+</ul><h2>
+<a name="for-generating-admin" class="anchor" href="#for-generating-admin"><span class="octicon octicon-link"></span></a>For generating admin,</h2>
+
+<pre><code>    $ python manage.py scaffoldgen --admin &lt;fully_qualified_model_name&gt;
+    $ python manage.py scaffoldgen --admin person.models.Person
+</code></pre>
+
+<p>This generates, </p>
+
+<div class="highlight highlight-python"><pre>
+<span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Person</span><span class="p">)</span>
+</pre></div>
+
+<p>Note :: You must have the line "from person.models import *" at the top of person/admin.py. 
+This program will not add it
+Note :: This program will not check for duplicate registration</p>
+
+<p>For generating urls and views</p>
+
+<pre><code>     $ python manage.py scaffoldgen --views &lt;fully_qualified_model_name&gt;
+ $ python manage.py scaffoldgen --views person.models.Person        
+</code></pre>
+
+<p>Some of the things that you should do before running this command.</p>
+
+<ul>
+<li>Add your app to the main urls.py </li>
+<li>Put these imports at the top of the views.py</li>
+</ul>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Scaffold-gen maintained by <a href="https://github.com/neshkatrapati">neshkatrapati</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
